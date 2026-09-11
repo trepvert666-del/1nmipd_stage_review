@@ -1,6 +1,6 @@
 # 1 nm IPD量测机台——技术基线
 
-> 当前版本：v0.1  
+> 当前版本：v0.2  
 > 状态：方案设计与分析阶段  
 > 原则：只记录当前有效口径；未验证能力不得写成实测结果。
 
@@ -17,13 +17,13 @@
 ## 2. 当前整机测量流程
 
 - 🟢 Wafer级调平只执行一次。
-- 🟡 对焦方案尚未最终确定，当前暂定共聚焦自动对焦。
-- 🟢 XY运动与Z对焦按串行考虑，不假设Z轴能在长距离XY运动过程中完全随动完成对焦。
+- 🟢 自动对焦采用Sony类狭缝式光学自动对焦方案。\n- 🔴 原“暂定共聚焦自动对焦”口径废弃。
+- 🟢 不采用XY长距离运动中的高速随动对焦。\n- 🟡 保留Focus Ready / Measurement Ready两级settling策略：XY大运动结束并进入狭缝AF可捕获状态后启动Z对焦；对焦期间XY残余振动继续衰减，图像采集前再满足最终量测稳定条件。
 - 🟢 工作点激光干涉计量在运动、停稳与图像采集全过程持续进行，不作为额外串行节拍步骤。
 - 🟢 IPD为全局计算：25 Die抽检用于确定Wafer级低阶变形，单Die内部测量用于确定高阶局部变形。
 
 当前流程：
-Wafer上片 → ESC吸附 → 找正/建系 → Wafer级调平 → 25 Die依次寻址 → XY停稳 → Z对焦 → 图像采集 → 下一Die → 25点完成 → 全局IPD解算 → 输出Wafer级低阶与Die内高阶结果。
+Wafer上片 → ESC吸附 → 找正/建系 → Wafer级调平 → 25 Die依次寻址 → Focus Ready → Z狭缝AF对焦（同时XY继续残余settling） → Measurement Ready → 图像采集 → 下一Die → 25点完成 → 全局IPD解算 → 输出Wafer级低阶与Die内高阶结果。
 
 ---
 
@@ -78,12 +78,44 @@ Z字拓扑优先 > 抑制大跳 > 总路径最短
 
 ---
 
-## 5. 节拍模型
+## 5. Settling与自动对焦
+
+### 5.1 Focus Ready
+
+🟡 XY大行程运动结束后，当平台残余位置、速度及振动进入狭缝AF的有效检测/捕获条件时，允许启动Z向自动对焦；此时不要求工作点达到最终IPD量测稳定状态。
+
+Focus Ready最终由狭缝AF有效检测范围、信号线性区、XY残余速度/振动及Z执行机构闭环条件共同确定，具体数值待方案参数、供应商规格或样机测试确认。
+
+### 5.2 Measurement Ready
+
+🟡 图像采集仅在自动对焦完成，且工作点干涉计量确认Wafer相对于光学测量基准的稳定性满足IPD量测要求后启动。
+
+### 5.3 时间重叠
+
+当前采用：
+
+```
+XY Move
+→ Focus Ready
+→ [Z Autofocus || XY residual settling / fine-stage compensation]
+→ Measurement Ready
+→ Acquisition
+```
+
+即Z自动对焦可与XY最终残余settling部分重叠，而不是等待XY完全达到最终量测稳定状态后才开始对焦。
+
+### 5.4 待验证
+
+🔵 Patterned wafer可能使狭缝AF受到图形、膜层、反射率及局部台阶影响，后续需验证pattern-dependent focus bias、有效线性范围、捕获范围、Z闭环响应时间、重复性及标定策略。
+
+---
+
+## 6. 节拍模型
 
 单个采样点当前按串行关系：
 
 ```
-T_die = T_move + T_settle + T_focus + T_acq
+T_die ≈ T_move + T_focus-ready + max(T_focus, T_residual-settle-after-focus-ready) + T_acq
 ```
 
 整片25点抽检：
@@ -108,3 +140,15 @@ T_load
 - 总运动时间；
 - 总停稳时间；
 - 单Wafer 25点扫描节拍。
+
+
+---
+
+## 7. Baseline Change Log
+
+### v0.2 — 2026-09-11
+- 自动对焦由暂定共聚焦修改为Sony类狭缝式自动对焦。
+- 保留并细化Focus Ready / Measurement Ready两级settling策略。
+- 明确Z自动对焦可与XY residual settling部分时间重叠。
+- 节拍模型更新为考虑两级settling与对焦重叠的模型。
+- 新增patterned wafer对狭缝AF影响的待验证项。
