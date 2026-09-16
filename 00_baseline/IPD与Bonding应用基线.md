@@ -9,78 +9,84 @@
 本项目不再仅定义为“背面光刻前的IPD/CPE量测设备”。当前更完整的应用闭环为：
 
 ```text
-Pre-bond同面位置场量测
+最终工艺状态位置场量测
+        +
+设计 / 理想 / Golden wafer / 批次参考网格
         ↓
-Fusion Bonding
-        ↓
-Post-bond同面位置场复测
-        ↓
-同一组计量特征坐标差分
-        ↓
-IPD Map / IPD fingerprint
+最终状态 IPD Map / IPD fingerprint
+        ├──→ 评价最终几何质量与批次稳定性
         ├──→ 关联并推测 Bonding Overlay / Bonding distortion
-        ├──→ 评价当前 Bonding 几何质量与稳定性
+        ├──→ 为后续 Backside Lithography / CPE提供输入
         ├──→ 结合独立真值推测界面质量风险
-        ├──→ 更新 Bonding 工艺模型
-        ├──→ 为下一次 Bonding 的 wafer 配对、预对准、压力/间隙/键合波等参数提供前馈
-        └──→ 后续 Backside Lithography / CPE（适用时）
+        └──→ 更新 Bonding 工艺模型及下一片/下一批Recipe
+       
+可选增强：Pre/Post对应位置场差分
+        └──→ 分离Bonding或指定工艺区间新增的IPD
 ```
 
 因此，IPD应被定义为Fusion Bonding过程的一个**空间响应量**，而不是仅作为光刻补偿参数。
 
-## 2. 当前主应用场景
+## 2. 当前测量模式
 
-### 2.1 顶层晶圆同一可访问表面的Pre/Post差分
+### 2.1 最终状态单次量测：生产主模式
 
-当前主路线为：在Fusion Bonding前后，量测顶层晶圆同一物理表面上的同一组可追踪计量特征。两次量测均采用一致的特征定义、坐标方向和定位算法，不再采用“键合前测正面、键合后测背面”，也不引入front-to-back transfer calibration。
+当前主模式不要求必须进行Pre/Post差分。晶圆完成Bonding及规定的后续工艺后，在需要评价或曝光的最终状态下量测可见计量特征，并与设计网格、理想网格、Golden wafer或经确认的批次参考网格比较，得到最终状态IPD。
 
-```text
-顶层晶圆同一可访问表面
-        ↓
-Pre-bond位置场测量
-        ↓
-Fusion Bonding
-        ↓
-Post-bond复测同一表面、同一组计量特征
-        ↓
-统一晶圆坐标系下差分获得IPD
-```
+该模式用于：
 
-计量特征可包括专用十字、box、grating、周期性阵列、dummy结构或其他具有稳定几何中心的标记。原始表面无可定位图形时，需要在工艺设计阶段增加专用metrology mark；仅对无图形硅面成像，不能形成1 nm级可追溯二维位置坐标。
+- 评价最终晶圆位置场、低阶/高阶畸变和局部热点；
+- 形成Bonding质量风险及工艺稳定性特征；
+- 为后续Backside Lithography / CPE提供尽可能接近曝光状态的输入；
+- 与历史Recipe、过程Trace及独立质量真值关联，更新Bonding模型。
 
-## 3. 同面差分的关键边界
+最终状态量测不要求键合前已经测过同一片晶圆，也不要求两次测量面相同，因此不需要建立正反面坐标转移关系。
 
-设同一计量表面为\(S\)，第\(i\)个计量特征经统一坐标转换后的Pre/Post位置分别为\(\mathbf r_{i,S}^{pre}\)和\(\mathbf r_{i,S}^{post}\)，则：
+### 2.2 Pre/Post差分：可选诊断模式
+
+若需要回答“Bonding或指定工艺区间新增了多少变形”，可增加Pre-bond位置场量测，并在Post-bond对应状态复测同一组可追踪特征。差分模式用于机理研究、DOE和Recipe优化，不作为生产模式获得IPD的必要条件。
+
+## 3. 最终状态IPD与参考网格
+
+设第\(i\)个计量特征的最终晶圆坐标为\(\mathbf r_i^{final}\)，参考位置为\(\mathbf r_i^{ref}\)，则：
 
 \[
 \boxed{
-\mathbf{IPD}_{i,S}
+\mathbf{IPD}_i^{final}
 =
-\mathbf r_{i,S}^{post}
+\mathbf r_i^{final}
 -
-\mathbf r_{i,S}^{pre}
+\mathbf r_i^{ref}
 }
 \]
 
-当前定义同时要求：
+参考网格可以来自版图设计坐标、规定的理想晶圆网格、Golden wafer或经统计确认的批次基准。不同参考定义对应不同物理含义，必须随结果记录：
 
-1. 两次量测针对同一物理表面，不是两个表面之间的坐标转移；
-2. 两次量测针对同一组具有唯一身份的计量特征；
-3. 两次量测之间的工艺不能移除、覆盖或重构该表面及计量特征；
-4. 两次量测统一晶圆中心、notch方向、坐标尺度及允许扣除项。
+- 以设计/理想网格为参考时，结果包含初始制造偏差和全部前序工艺累积变形；
+- 以Golden wafer或批次模型为参考时，结果表示相对于过程基准的偏离；
+- 用于CPE时，应采用与曝光坐标系统一、且尽可能接近曝光工艺状态的最终位置场。
 
-主流程建议将Post-bond同面量测布置在会破坏计量表面和标记的减薄、刻蚀或再成膜之前。若在减薄后量测新显露结构，该结果属于后续工艺状态位置场，不再纳入本基线的严格同面差分，需另建工艺贡献和坐标传递模型。
+坐标建系可扣除规定的晶圆中心、notch方向、整体平移和旋转，但不能使用无约束高阶拟合把真实工艺畸变一并吸收。应保留原始位置场、建系后位置场、低阶模型和高阶残差。
 
-坐标配准只消除两次上片造成的整体位姿差异，不能使用无约束高阶拟合把真实Bonding畸变一并扣除。应同时保留原始位置场、刚性配准后位置场、低阶模型和高阶残差。
+## 4. 可选差分IPD及工艺解释边界
 
-## 4. 当前IPD的工艺定义
-
-当前主IPD表示Fusion Bonding前后同一表面的位置变化：
+若执行Pre/Post对应特征量测，则：
 
 \[
-\mathbf D_{meas}
+\boxed{
+\Delta\mathbf{IPD}_i
 =
-\mathbf D_{bond}
+\mathbf r_i^{post}
+-
+\mathbf r_i^{pre}
+}
+\]
+
+差分结果更接近指定工艺区间新增的位置变化，但仍包含两次夹持、温度、建系和量测链差异：
+
+\[
+\Delta\mathbf D_{meas}
+=
+\Delta\mathbf D_{process}
 +
 \Delta\mathbf E_{chuck}
 +
@@ -89,11 +95,9 @@ Post-bond复测同一表面、同一组计量特征
 \Delta\mathbf E_{metrology}.
 \]
 
-其中，\(\mathbf D_{bond}\)为Bonding引起的真实面内位置变化；其余项分别表示两次夹持状态差异、温度状态差异和量测链差异。项目目标是通过一致的夹持、温控、工作点计量、设备标定和重复性试验约束这些附加项，并给出差分结果的不确定度。
+两次独立量测且单次标准差相同时，差分随机误差近似满足\(\sigma_{\Delta d}\approx\sqrt{2}\sigma_m\)。因此，差分有利于分离工艺增量，但量测链和不确定度也更长。
 
-该定义优先服务Bonding几何质量评价。若需要进一步推测空洞、局部黏附不足或结合强度等界面质量，必须引入SAM、红外、强度或电学结果作为独立真值进行标定；IPD仅作为关联特征，不能单独给出唯一结论。
-
-若Pre/Post之间除Bonding外还包含退火或其他不会破坏计量表面的步骤，测得结果是这些步骤共同形成的工艺状态IPD。需要研究纯Bonding贡献时，应通过短流程对照试验或模型分离附加工艺影响。
+只测最终状态同样可以建立IPD fingerprint并评价几何质量，但不能把最终IPD全部归因于Bonding。若要由最终IPD推测Bonding状态，需要同时引入来片形貌、Recipe、过程Trace和历史标定数据。对空洞、局部黏附不足或结合强度等界面质量，还必须用SAM、红外、强度或电学结果作为独立真值；IPD只能作为关联特征。
 
 ## 5. Top-wafer IPD与Bonding Overlay的物理关系
 
@@ -270,15 +274,15 @@ Measure\rightarrow Understand\rightarrow Predict\rightarrow Control
 具体为：
 
 ```text
-第n片/批：Pre-bond shape + Pre-bond grid
+第n片/批：最终状态 IPD_n
+        +
+Bonding recipe_n / 过程Trace / 独立质量真值
+        +
+可选：Pre-bond shape/grid及Pre/Post差分
         ↓
-Bonding recipe_n
+更新 θ → IPD → Quality / Overlay 模型
         ↓
-Post-bond IPD_n + 实际Bonding Overlay_n
-        ↓
-更新 θ → IPD → Overlay 模型
-        ↓
-第n+1片：Pre-bond shape/grid
+第n+1片：来片信息与目标工艺窗口
         ↓
 预测风险与畸变
         ↓
@@ -297,13 +301,14 @@ Backside Lithography/CPE保留为另一个下游出口，但不再是唯一应�
 
 推荐在项目背景中使用：
 
-> 本项目面向Fusion Bonding过程中晶圆面内位置变化的高精度量测。通过建立同片晶圆工艺前后的高密度位置场，获得IPD fingerprint，并结合上下晶圆初始形貌、对准状态及Bonding recipe，建立IPD与Bonding Overlay及键合工艺状态之间的关联模型。一方面用于评价当前Bonding质量、识别高阶和局部畸变，另一方面为后续晶圆配对、预对准和键合参数优化提供前馈信息；在存在背面光刻的工艺中，IPD结果还可进一步转换为CPE输入。
+> 本项目面向Fusion Bonding及其后续工艺形成的晶圆面内位置变化开展高精度量测。设备以最终状态单次位置场量测为生产主模式，通过最终实测坐标相对设计或参考网格的偏差获得IPD fingerprint，用于评价几何质量、关联Bonding Overlay并形成后续光刻CPE输入；在研发和异常分析阶段，可增加Pre/Post对应位置场差分，以分离Bonding或指定工艺区间新增的变形。结合来片形貌、Bonding recipe、过程Trace及独立质量真值，可进一步建立IPD与Bonding状态之间的关联模型，并为后续Recipe优化提供反馈信息。
 
 避免使用以下过强表述：
 
 - “Top IPD就是Bonding Overlay”；
 - “测一片Top wafer即可唯一反演所有Bonding参数”；
 - “Bonding Overlay = 2 × Top IPD”；
+- “最终状态IPD全部由Bonding产生”；
 - “Bonding+Thinning后测得的差分就是纯Bonding IPD”。
 
 ## 10. 公开资料基线
@@ -332,9 +337,9 @@ Backside Lithography/CPE保留为另一个下游出口，但不再是唯一应�
 
 1. Top IPD对Bottom IPD及Bonding Overlay的可辨识程度；
 2. 是否增加Bottom wafer测量通道/流程以降低模型欠定性；
-3. 同面metrology mark的结构设计、可见性和长期几何稳定性；
-4. 计量标记在Bonding前后是否保持同一身份，且不被覆盖、移除或重构；
-5. Bonding、夹持差异、温度差异及其他保留工艺步骤对IPD贡献的实验分离方案；
+3. 最终状态参考网格的来源、定义、坐标追溯和不确定度；
+4. 最终状态计量标记的可见性、设计坐标和长期几何稳定性；
+5. 差分模式下Bonding、夹持差异、温度差异及其他工艺步骤贡献的实验分离方案；
 6. Incoming wafer shape是否应作为设备必测输入或外部接口输入；
 7. Bonding Overlay真值如何获得并作为模型训练/验证基准；
 8. IPD fingerprint到Bonding recipe前馈的参数接口与验收方式。
