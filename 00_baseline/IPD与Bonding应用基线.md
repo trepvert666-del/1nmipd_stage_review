@@ -9,15 +9,18 @@
 本项目不再仅定义为“背面光刻前的IPD/CPE量测设备”。当前更完整的应用闭环为：
 
 ```text
-Pre-bond metrology
+Pre-bond同面位置场量测
         ↓
 Fusion Bonding
         ↓
-Post-bond / post-thinning metrology
+Post-bond同面位置场复测
+        ↓
+同一组计量特征坐标差分
         ↓
 IPD Map / IPD fingerprint
         ├──→ 关联并推测 Bonding Overlay / Bonding distortion
-        ├──→ 评价当前 Bonding 过程质量与稳定性
+        ├──→ 评价当前 Bonding 几何质量与稳定性
+        ├──→ 结合独立真值推测界面质量风险
         ├──→ 更新 Bonding 工艺模型
         ├──→ 为下一次 Bonding 的 wafer 配对、预对准、压力/间隙/键合波等参数提供前馈
         └──→ 后续 Backside Lithography / CPE（适用时）
@@ -27,99 +30,70 @@ IPD Map / IPD fingerprint
 
 ## 2. 当前主应用场景
 
-### 2.1 Via-first / Via-middle及可显露计量结构
+### 2.1 顶层晶圆同一可访问表面的Pre/Post差分
 
-当前优先考虑的工艺场景为：
+当前主路线为：在Fusion Bonding前后，量测顶层晶圆同一物理表面上的同一组可追踪计量特征。两次量测均采用一致的特征定义、坐标方向和定位算法，不再采用“键合前测正面、键合后测背面”，也不引入front-to-back transfer calibration。
 
 ```text
-顶层晶圆完成器件 / via-first TSV / 专用计量结构
+顶层晶圆同一可访问表面
         ↓
 Pre-bond位置场测量
         ↓
 Fusion Bonding
         ↓
-顶层晶圆背面减薄
+Post-bond复测同一表面、同一组计量特征
         ↓
-TSV / dummy via / metrology via / reveal mark显露
-        ↓
-Post-bond背面位置场测量
-        ↓
-差分获得IPD
+统一晶圆坐标系下差分获得IPD
 ```
 
-设备第一阶段以**表面光学计量**为主，不以through-Si IR作为主技术路线。
+计量特征可包括专用十字、box、grating、周期性阵列、dummy结构或其他具有稳定几何中心的标记。原始表面无可定位图形时，需要在工艺设计阶段增加专用metrology mark；仅对无图形硅面成像，不能形成1 nm级可追溯二维位置坐标。
 
-适用结构不限定为功能TSV，可包括：
+## 3. 同面差分的关键边界
 
-- functional TSV；
-- dummy TSV；
-- metrology via；
-- 周期性via array；
-- 专用十字、box、grating或其他reveal mark；
-- 其他经减薄后可在背面直接观察、并可与键合前建立坐标关系的结构。
-
-## 3. Pre/Post测量面的关键边界
-
-第二次测量位于Bonding + thinning/reveal之后的顶层晶圆背面。
-
-从严格物理定义看，若希望得到真正的backside IPD，第一次测量也应对应最终背面材料坐标：
+设同一计量表面为\(S\)，第\(i\)个计量特征经统一坐标转换后的Pre/Post位置分别为\(\mathbf r_{i,S}^{pre}\)和\(\mathbf r_{i,S}^{post}\)，则：
 
 \[
-IPD_{BS}=P^{post}_{BS}-P^{pre}_{BS}.
+\boxed{
+\mathbf{IPD}_{i,S}
+=
+\mathbf r_{i,S}^{post}
+-
+\mathbf r_{i,S}^{pre}
+}
 \]
 
-但在via-first等工艺中，Pre-bond时最终背面特征仍埋在厚Si内部，纯表面光学无法直接观测。因此当前必须显式区分“测量面一致”和“可实现性”。
+当前定义同时要求：
 
-### 3.1 不直接采用“正面TSV端 → 背面TSV端”无条件做差
+1. 两次量测针对同一物理表面，不是两个表面之间的坐标转移；
+2. 两次量测针对同一组具有唯一身份的计量特征；
+3. 两次量测之间的工艺不能移除、覆盖或重构该表面及计量特征；
+4. 两次量测统一晶圆中心、notch方向、坐标尺度及允许扣除项。
 
-若第一次测TSV正面端、第二次测reveal后的TSV背面端，则：
+主流程建议将Post-bond同面量测布置在会破坏计量表面和标记的减薄、刻蚀或再成膜之前。若在减薄后量测新显露结构，该结果属于后续工艺状态位置场，不再纳入本基线的严格同面差分，需另建工艺贡献和坐标传递模型。
 
-\[
-\Delta P_{meas}
-=IPD_{BS}+\Delta P_{front-back}^{TSV}+E_{reveal}+E_{metrology}.
-\]
-
-其中，\(\Delta P_{front-back}^{TSV}\)包含TSV轴线倾斜、DRIE垂直度、锥度等造成的两端固有XY差异，因此不能在1 nm目标下无条件忽略。
-
-例如TSV有效深度50 µm、轴线倾斜100 µrad时，两端横向偏移已约为5 nm。
-
-### 3.2 当前推荐路线
-
-对于纯表面光学设备，当前更合理的工程路线为：
-
-\[
-\hat P^{pre}_{BS}=P^{pre}_{FS}+C_{FB},
-\]
-
-其中：
-
-- \(P^{pre}_{FS}\)：键合前可从表面测得的位置；
-- \(C_{FB}\)：front-to-back transfer calibration，由专用结构、test wafer和工艺标定获得；
-- \(\hat P^{pre}_{BS}\)：对键合前最终backside reference position的估计。
-
-最终：
-
-\[
-IPD_{BS}=P^{post}_{BS}-\hat P^{pre}_{BS}.
-\]
-
-专用metrology via / reveal mark应优先于“单根功能TSV圆心”作为1 nm级计量基准。
+坐标配准只消除两次上片造成的整体位姿差异，不能使用无约束高阶拟合把真实Bonding畸变一并扣除。应同时保留原始位置场、刚性配准后位置场、低阶模型和高阶残差。
 
 ## 4. 当前IPD的工艺定义
 
-第二次测量发生在Bonding + thinning/reveal之后，因此实际测量结果不仅包含纯Bonding变形，还可能包含减薄和reveal造成的附加位置变化：
+当前主IPD表示Fusion Bonding前后同一表面的位置变化：
 
 \[
-D_{meas}=D_{bond}+D_{thin}+D_{reveal}.
+\mathbf D_{meas}
+=
+\mathbf D_{bond}
++
+\Delta\mathbf E_{chuck}
++
+\Delta\mathbf E_{temp}
++
+\Delta\mathbf E_{metrology}.
 \]
 
-因此：
+其中，\(\mathbf D_{bond}\)为Bonding引起的真实面内位置变化；其余项分别表示两次夹持状态差异、温度状态差异和量测链差异。项目目标是通过一致的夹持、温控、工作点计量、设备标定和重复性试验约束这些附加项，并给出差分结果的不确定度。
 
-- 若目标是研究纯Bonding机制，需要通过独立试验/模型分离\(D_{thin}\)和\(D_{reveal}\)；
-- 若目标是评价进入下一工序前的实际晶圆状态，则\(D_{meas}\)本身就是有价值的过程IPD；
-- 若用于后续背面光刻/CPE，则应使用工艺后实际状态，而不是强行删除真实存在的thinning/reveal影响。
+该定义优先服务Bonding几何质量评价。若需要进一步推测空洞、局部黏附不足或结合强度等界面质量，必须引入SAM、红外、强度或电学结果作为独立真值进行标定；IPD仅作为关联特征，不能单独给出唯一结论。
 
-当前项目书中优先使用“工艺状态IPD / process IPD”这一更严谨概念，避免把Bonding+Thinning后的差分结果全部称为“纯Bonding IPD”。
+若Pre/Post之间除Bonding外还包含退火或其他不会破坏计量表面的步骤，测得结果是这些步骤共同形成的工艺状态IPD。需要研究纯Bonding贡献时，应通过短流程对照试验或模型分离附加工艺影响。
 
 ## 5. Top-wafer IPD与Bonding Overlay的物理关系
 
@@ -358,9 +332,9 @@ Backside Lithography/CPE保留为另一个下游出口，但不再是唯一应�
 
 1. Top IPD对Bottom IPD及Bonding Overlay的可辨识程度；
 2. 是否增加Bottom wafer测量通道/流程以降低模型欠定性；
-3. Front-to-back transfer calibration \(C_{FB}\)的结构设计和长期稳定性；
-4. 功能TSV与专用metrology via在1 nm级定位稳定性上的差异；
-5. Bonding、thinning、reveal三部分IPD贡献的实验分离方案；
+3. 同面metrology mark的结构设计、可见性和长期几何稳定性；
+4. 计量标记在Bonding前后是否保持同一身份，且不被覆盖、移除或重构；
+5. Bonding、夹持差异、温度差异及其他保留工艺步骤对IPD贡献的实验分离方案；
 6. Incoming wafer shape是否应作为设备必测输入或外部接口输入；
 7. Bonding Overlay真值如何获得并作为模型训练/验证基准；
 8. IPD fingerprint到Bonding recipe前馈的参数接口与验收方式。
