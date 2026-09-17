@@ -1,12 +1,14 @@
 # IPD量测与Fusion Bonding应用基线
 
 > 状态：当前有效讨论口径
-> 更新日期：2026-09-16
+> 更新日期：2026-09-17
 > 适用范围：1 nm IPD量测设备的应用定义、测量对象、Bonding Overlay关联与下一次Bonding前馈
 
 ## 1. 项目应用定位
 
-本项目不再仅定义为“背面光刻前的IPD/CPE量测设备”。当前更完整的应用闭环为：
+本项目不再仅定义为“背面光刻前的IPD/CPE量测设备”。项目名称中的“1 nm”统一指设备对有效图案或计量标记X、Y位置的量测能力，以及由该位置相对规定参考形成IPD的能力；不指后续光刻CPE残差、曝光后Overlay或Bonding Overlay达到1 nm。
+
+当前更完整的应用闭环为：
 
 ```text
 最终工艺状态位置场量测
@@ -103,7 +105,7 @@
 
 ### 5.1 基本关系
 
-Bonding Overlay描述上下两片晶圆之间的相对位置误差；Top IPD描述顶层晶圆自身grid在工艺前后的位移。二者有关，但不是同一个量。
+Bonding Overlay描述上下两片晶圆之间的相对位置误差；Top IPD描述顶层晶圆最终grid相对设计/参考网格的偏离，或在可选差分模式下描述规定工艺区间的增量位移。二者有关，但不是同一个量。
 
 定义顶层和底层晶圆的面内位移分别为：
 
@@ -295,13 +297,13 @@ Recipe_(n+1) / wafer pairing / alignment / pressure / gap / timing前馈
 2. **Diagnose/Predict**：Bonding fingerprint、Bonding Overlay关联/预测；
 3. **Control input**：为下一次Bonding提供前馈参数和工艺窗口依据。
 
-Backside Lithography/CPE保留为另一个下游出口，但不再是唯一应用终点。
+Backside Lithography/CPE保留为另一个下游出口，但不再是唯一应用终点。上述Bonding质量识别率、Bonding Overlay预测误差、CPE拟合残差和曝光后Overlay均作为应用效果单独验证，不继承本机图案位置量测的1 nm指标。
 
 ## 9. 当前项目书建议表述
 
 推荐在项目背景中使用：
 
-> 本项目面向Fusion Bonding及其后续工艺形成的晶圆面内位置变化开展高精度量测。设备以最终状态单次位置场量测为生产主模式，通过最终实测坐标相对设计或参考网格的偏差获得IPD fingerprint，用于评价几何质量、关联Bonding Overlay并形成后续光刻CPE输入；在研发和异常分析阶段，可增加Pre/Post对应位置场差分，以分离Bonding或指定工艺区间新增的变形。结合来片形貌、Bonding recipe、过程Trace及独立质量真值，可进一步建立IPD与Bonding状态之间的关联模型，并为后续Recipe优化提供反馈信息。
+> 本项目面向Fusion Bonding及其后续工艺形成的晶圆面内位置变化开展1 nm级图案位置量测。设备以最终状态单次位置场量测为生产主模式，将图像局部定位与曝光工作点坐标融合为统一晶圆坐标，并通过最终实测坐标相对设计或参考网格的偏差获得IPD fingerprint，用于评价几何质量、关联Bonding Overlay并形成后续光刻CPE输入；在研发和异常分析阶段，可增加Pre/Post对应位置场差分，以分离Bonding或指定工艺区间新增的变形。结合来片形貌、Bonding recipe、过程Trace及独立质量真值，可进一步建立IPD与Bonding状态之间的关联模型，并为后续Recipe优化提供反馈信息。这里的1 nm只约束图案位置/IPD量测能力，不构成CPE、曝光后Overlay或Bonding Overlay的1 nm承诺。
 
 避免使用以下过强表述：
 
