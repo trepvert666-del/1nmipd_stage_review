@@ -14,12 +14,16 @@ OUT.mkdir(exist_ok=True)
 FONT_CANDIDATES = [
     Path("/workspace/scratch/5dac3d6fdad8/NotoSansCJKsc-Regular.otf"),
     Path("/workspace/scratch/df6aee2eaf3c/NotoSansCJKsc-Regular.otf"),
-]
+] + list(Path("/workspace/scratch").glob("*/tmp/fonts/NotoSansCJKsc-Regular.otf"))
 for candidate in FONT_CANDIDATES:
     if candidate.exists():
-        font_manager.fontManager.addfont(candidate)
-        plt.rcParams["font.family"] = font_manager.FontProperties(fname=str(candidate)).get_name()
-        break
+        try:
+            font_manager.fontManager.addfont(candidate)
+            plt.rcParams["font.family"] = font_manager.FontProperties(fname=str(candidate)).get_name()
+            break
+        except RuntimeError:
+            # A partially downloaded font should not block figure generation.
+            continue
 plt.rcParams["axes.unicode_minus"] = False
 
 BLUE = "#1F4E79"
@@ -155,22 +159,50 @@ def fig_error_budget():
 
 
 def fig_motion_metrology():
-    fig, ax = canvas((12, 5.4))
-    items = [
-        (0.03, "宏动平台\n大行程寻址", ORANGE),
-        (0.23, "局部微动\n残余补偿", GREEN),
-        (0.43, "ESC / 晶圆\n实际工作点", BLUE),
-        (0.65, "四通道干涉\n平移 + Rz", MID),
-        (0.83, "曝光加权坐标\n进入图像融合", GREEN),
-    ]
-    for i, (x, t, c) in enumerate(items):
-        box(ax, (x, .40), (.15, .25), t, fc="white", ec=c, fontsize=10.5, lw=2)
-        if i < len(items)-1:
-            arrow(ax, (x+.15, .525), (items[i+1][0], .525))
-    ax.annotate("反馈 / 前馈", xy=(.30,.69), xytext=(.71,.78), ha="center", color=BLUE,
-                arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.25", color=BLUE, lw=1.5))
-    ax.text(.50,.20,"环外参考验证镜头—参考端与晶圆—平面镜未观测差模",ha="center",fontsize=10.5,color=GRAY)
-    ax.set_title("控制目标是曝光期间Wafer—Lens真实相对运动", fontsize=15, weight="bold", color=BLUE)
+    fig, ax = canvas((12, 7.0))
+
+    # Coordination layer: trajectory, state transitions, position sharing and interlocks.
+    box(ax, (0.31, 0.79), (0.38, 0.12),
+        "实时协调控制器\n轨迹·前馈·回中·Measurement Ready·互锁",
+        fc=LIGHT, ec=BLUE, fontsize=10.5, lw=2)
+
+    # Mechanical load path.
+    box(ax, (0.04, 0.45), (0.18, 0.16), "400 mm宏动\n平面电机+气浮", fc="white", ec=ORANGE, fontsize=10.5, lw=2)
+    box(ax, (0.29, 0.45), (0.18, 0.16), "XY微动\n局部精修", fc="white", ec=GREEN, fontsize=10.5, lw=2)
+    box(ax, (0.54, 0.45), (0.18, 0.16), "ESC+晶圆+平面镜\n运动工作点", fc="white", ec=BLUE, fontsize=10.5, lw=2)
+    box(ax, (0.79, 0.45), (0.17, 0.16), "固定物镜\nWafer—Lens相对量", fc="#F2F2F2", ec=GRAY, fontsize=10.5, lw=2)
+    arrow(ax, (0.22, 0.53), (0.29, 0.53), color=ORANGE, lw=2)
+    arrow(ax, (0.47, 0.53), (0.54, 0.53), color=ORANGE, lw=2)
+    ax.plot([0.72, 0.79], [0.53, 0.53], color=GRAY, lw=1.4, ls="--")
+    ax.text(0.50, 0.66, "机械串联链：长行程寻址 → 局部补偿 → 晶圆工作点", ha="center", fontsize=9.5, color=GRAY)
+
+    # Sensor and metrology layer.
+    box(ax, (0.04, 0.16), (0.18, 0.13), "1D光栅本地环\n长行程位置/速度", fc=PALE, ec=ORANGE, fontsize=9.5, lw=1.7)
+    box(ax, (0.29, 0.16), (0.18, 0.13), "电容传感本地环\n微动相对位移", fc=PALE, ec=GREEN, fontsize=9.5, lw=1.7)
+    box(ax, (0.54, 0.16), (0.18, 0.13), "四通道干涉计量\nX/Y/Rz+统一时标", fc=PALE, ec=MID, fontsize=9.5, lw=1.7)
+    box(ax, (0.79, 0.16), (0.17, 0.13), "曝光加权坐标\n进入图像融合", fc="#E2F0D9", ec=GREEN, fontsize=9.5, lw=1.7)
+
+    # Local sensing and final metrology connections.
+    arrow(ax, (0.13, 0.45), (0.13, 0.29), color=ORANGE)
+    arrow(ax, (0.38, 0.45), (0.38, 0.29), color=GREEN)
+    arrow(ax, (0.63, 0.45), (0.63, 0.29), color=MID)
+    arrow(ax, (0.72, 0.225), (0.79, 0.225), color=MID)
+
+    # Feedback to the common real-time coordinator.
+    ax.annotate("", xy=(0.36, 0.79), xytext=(0.13, 0.29),
+                arrowprops=dict(arrowstyle="->", color=ORANGE, lw=1.4, connectionstyle="arc3,rad=-.12"))
+    ax.annotate("", xy=(0.47, 0.79), xytext=(0.38, 0.29),
+                arrowprops=dict(arrowstyle="->", color=GREEN, lw=1.4, connectionstyle="arc3,rad=-.06"))
+    ax.annotate("", xy=(0.61, 0.79), xytext=(0.63, 0.29),
+                arrowprops=dict(arrowstyle="->", color=MID, lw=1.4, connectionstyle="arc3,rad=.06"))
+    arrow(ax, (0.40, 0.79), (0.13, 0.61), color=BLUE, lw=1.3)
+    arrow(ax, (0.50, 0.79), (0.38, 0.61), color=BLUE, lw=1.3)
+    ax.text(0.77, 0.73, "带宽分工·幅相校正\n行程管理·故障退出", ha="center", fontsize=9.2, color=BLUE)
+
+    ax.text(0.50, 0.055,
+            "环外参考验证晶圆—平面镜与物镜—干涉参考端的未观测差模",
+            ha="center", fontsize=10, color=GRAY)
+    ax.set_title("宏微运动、局部闭环与工作点计量架构", fontsize=15, weight="bold", color=BLUE)
     save(fig, "fig06_motion_metrology.png")
 
 
