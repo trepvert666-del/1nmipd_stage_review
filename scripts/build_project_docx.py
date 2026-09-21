@@ -16,7 +16,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "01_project_book" / "1nm晶圆IPD量测设备_整机项目书.md"
-OUT = ROOT / "01_project_book" / "1nm晶圆IPD量测设备_整机项目书_V2.0.docx"
+OUT = ROOT / "01_project_book" / "1nm晶圆IPD量测设备_整机项目书_V2.1.docx"
 BUILD = ROOT / ".docx_build"
 REFERENCE = BUILD / "reference.docx"
 TEMP = BUILD / "project_raw.docx"
@@ -44,16 +44,21 @@ FIGURES = [
 # not refresh Word fields. They are updated after the final pagination audit.
 TOC_PAGES = {
     "项目摘要": "ii", "插图清单": "iv", "符号与缩略语": "v",
-    "第一章  项目背景与应用需求": "1", "第二章  测量原理与性能定义": "4",
-    "第三章  系统总体设计": "8", "第四章  整机误差预算": "11",
-    "第五章  精密运动与位置计量": "14", "第六章  静电卡盘与面形补偿": "17",
-    "第七章  隔振系统与结构稳定性": "18", "第八章  深紫外显微成像": "19",
-    "第九章  狭缝式自动对焦": "21", "第十章  图形定位与IPD解算": "22",
-    "第十一章  环境控制与漂移补偿": "24", "第十二章  测量节拍与数据处理": "25",
-    "第十三章  系统标定与性能验证": "27", "结论与实施建议": "30",
-    "参考文献": "31", "附录A  设计输入与冻结口径": "32",
-    "附录B  顶层主张与证据闭环": "33", "附录C  数据记录最小集合": "34",
-    "附录D  风险与阶段交付": "35",
+    "第一章  项目背景与应用需求": "1", "第二章  测量原理与性能定义": "7",
+    "第三章  系统总体设计": "13", "第四章  整机误差预算": "18",
+    "第五章  精密运动与位置计量": "23", "第六章  静电卡盘与面形补偿": "29",
+    "第七章  隔振系统与结构稳定性": "32", "第八章  深紫外显微成像": "35",
+    "第九章  狭缝式自动对焦": "38", "第十章  图形定位与IPD解算": "41",
+    "第十一章  环境控制与漂移补偿": "45", "第十二章  测量节拍与数据处理": "48",
+    "第十三章  系统标定与性能验证": "52", "结论与实施建议": "57",
+    "参考文献": "58", "附录A  设计输入与冻结口径": "59",
+    "附录B  顶层主张与证据闭环": "60", "附录C  数据记录最小集合": "61",
+    "附录D  风险与阶段交付": "62", "附录E  标定作业流程与质量控制": "63",
+    "附录F  验证试验卡与判定规则": "67", "附录G  数据接口与字段字典": "71",
+    "附录H  主张—证据—验证追溯矩阵": "75",
+    "附录I  关键工程计算与灵敏度分析": "79", "附录J  工程实施计划与设计评审清单": "84",
+    "附录K  风险分析、故障注入与降级策略": "89",
+    "附录L  典型结果判读与问题定位示例": "95",
 }
 
 
@@ -266,6 +271,11 @@ def insert_toc(doc):
         "第十三章  系统标定与性能验证", "结论与实施建议", "参考文献",
         "附录A  设计输入与冻结口径", "附录B  顶层主张与证据闭环",
         "附录C  数据记录最小集合", "附录D  风险与阶段交付",
+        "附录E  标定作业流程与质量控制", "附录F  验证试验卡与判定规则",
+        "附录G  数据接口与字段字典", "附录H  主张—证据—验证追溯矩阵",
+        "附录I  关键工程计算与灵敏度分析", "附录J  工程实施计划与设计评审清单",
+        "附录K  风险分析、故障注入与降级策略",
+        "附录L  典型结果判读与问题定位示例",
     ]
     # Insert the title first; subsequent insert-before operations keep it ahead
     # of all entries when the entries themselves are added in reverse order.
@@ -377,7 +387,7 @@ def style_document(doc):
         header = section.header
         header.is_linked_to_previous = False
         hp = header.paragraphs[0]
-        hp.text = "1 nm级晶圆图案位置与IPD量测设备项目书  |  V2.0"
+        hp.text = "1 nm级晶圆图案位置与IPD量测设备项目书  |  V2.1"
         hp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
         for r in hp.runs:
             set_run_font(r, size=8.5, color=GRAY)
