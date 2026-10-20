@@ -2,7 +2,7 @@
 
 > 状态：当前有效讨论口径
 > 更新日期：2026-10-19
-> 版本：v1.0（首次显式编号，历史状态由Git追踪）
+> 版本：v1.1（opus_opi分支修订稿，待审查合并；main分支v1.0仍为当前有效版本；历史状态由Git追踪）
 > 适用范围：1 nm IPD量测设备的应用定义、测量对象、Bonding Overlay关联与下一次Bonding前馈
 
 ## 0. 目标层级（2026-10-19确认）
@@ -33,7 +33,7 @@
         └──→ 分离Bonding或指定工艺区间新增的IPD
 ```
 
-因此，IPD应被定义为Fusion Bonding过程的一个**空间响应量**，而不是仅作为光刻补偿参数。
+因此，IPD可作为观测Fusion Bonding过程**空间响应**的量，而不是仅作为光刻补偿参数。以设计或理想网格为参考时，最终IPD还包含来片制造偏差和其他前序工艺的累积变形（见第3节），不全部来自Bonding。
 
 ## 2. 当前测量模式
 
@@ -148,15 +148,17 @@ O \neq IPD_{top}
 
 \[
 \boxed{
-O
+\mathbf O
 =
-IPD_{top}
+\mathbf{IPD}_{top}
 -
-IPD_{bottom}
+\mathbf{IPD}_{bottom}
 +
-O_{align}
+\mathbf O_0
 }
 \]
+
+上式成立的前提是两片晶圆的IPD已转换到同一键合对坐标系，并采用一致的参考网格。面对面键合时顶片相对底片翻转，顶片坐标需经镜像和旋转后才能与底片相减；该坐标约定及两片参考网格的对应关系尚未定义，列入第11节第3项。
 
 Top IPD可以作为Bonding Overlay的重要观测量，但不能直接等同于Bonding Overlay。
 
@@ -206,7 +208,7 @@ Top wafer in-plane strain/displacement field
 Post-bond Top IPD fingerprint
 ```
 
-因此Top IPD不是随机结果，而是Bonding力学过程的空间响应。
+因此Post-bond Top IPD中包含Bonding力学过程的空间响应，不是随机结果；其余部分来自来片状态和其他工艺步骤，分离方法见第4节及第11节第5项。
 
 ## 7. 用Top IPD推测Bonding状态与Overlay的方法
 
@@ -346,9 +348,17 @@ Backside Lithography/CPE保留为另一个下游出口，但不再是唯一应�
 
 1. Top IPD对Bottom IPD及Bonding Overlay的可辨识程度；
 2. 是否增加Bottom wafer测量通道/流程以降低模型欠定性；
-3. 最终状态参考网格的来源、定义、坐标追溯和不确定度；
+3. 最终状态参考网格的来源、定义、坐标追溯和不确定度，以及上下片IPD转换到同一键合对坐标系的约定（翻转、旋转、原点和参考网格对应）；
 4. 最终状态计量标记的可见性、设计坐标和长期几何稳定性；
 5. 差分模式下Bonding、夹持差异、温度差异及其他工艺步骤贡献的实验分离方案；
 6. Incoming wafer shape是否应作为设备必测输入或外部接口输入；
 7. Bonding Overlay真值如何获得并作为模型训练/验证基准；
 8. IPD fingerprint到Bonding recipe前馈的参数接口与验收方式。
+
+## 12. 版本记录
+
+### v1.1 — 2026-10-20（opus_opi分支）
+
+- 第1节、第6节删除“IPD/Top IPD即Bonding空间响应”的完全归因表述，与第3节参考网格含义及第9节禁用表述保持一致；
+- 第5.1节Overlay关系式统一使用\(\mathbf O_0\)，并写明上下片IPD须先转换到同一键合对坐标系，坐标约定列入第11节第3项；
+- 审查依据见`00_baseline/基线闭环审查_20261020.md`。
